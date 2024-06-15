@@ -61,7 +61,7 @@ In this part, I use the "malware scan for EC2" feature of GuardDuty to scan an E
 ##### Console
 ![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/43272332-5b7e-4824-b0db-8ea58b643e1c)
 ##### Json report
-The detailed in [`guardduty_malwareDetected.json`](guardduty_malwareDetected.json), which list the detail of many detected virus.
+The detailed in [`securittyHub_detectVirus.json`](securittyHub_detectVirus.json), which list the detail of many detected virus.
 
 ## Automated Security Response on AWS
 Refer to: https://github.com/aws-solutions/automated-security-response-on-aws
