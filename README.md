@@ -73,29 +73,36 @@ Refer to: https://github.com/aws-solutions/automated-security-response-on-aws
 - Playbook: a set of remediation
 
 ### Demo
-There are 5 demos in this project. However, for shortly, only the first demo has the description about runbooks. All demos have video attached.
+There are 5 demos in this project. However, for shortly, only the first demo has the description about runbooks. All demos listed in: https://www.youtube.com/playlist?list=PL7IdJecfX87jHfO43NYd6MXL8mBYWBAIf
+
 #### Orchestrator workflow
 ![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/929db750-3807-4da9-af94-4f7bcf0a9dde)
 #### Demo 1: Security groups should not allow ingress from 0.0.0.0/0 to port 22 – in member
 Input: Member creates a security group that opens port 22 for all IPv4
 => violate control EC2.13
+
 Acion: Monitor & remediate
+
 Output: 
-Findings generated in admin-member AWS Security Hub
-Remediation status notification to mail 
-Successfull automated remediation
+- Findings generated in admin-member AWS Security Hub
+- Remediation status notification to mail 
+- Successfull automated remediation
 
 ##### Control Runbook EC2.13
 ![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/9bdfabbc-1838-40e0-8ffd-9a21742e1468)
 
 **What does this document do?**
+
 Removes public access to remove server administrative ports from an EC2 Security Group.
 
 **Input parameters**
+
 - Finding: Security Hub finding details JSON
+- 
 - AutomationAssumeRole: ARN of the role allows automation to perform on your behalf.
 
 **Output parameters**
+
 Remediation.Output: Output of AWS-DisablePublicAccessForSecurityGroup rubook.
 
 ###### Step 1: ParseInput
@@ -114,7 +121,21 @@ Receive Security Group ID and IP permissions as inputs
 Then call the EC2 API RevokeSecurityGroupIngress:
 ![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/6759f7c5-ee19-41f3-8300-ba3d44d816f8)
 
-All video demos are listed in: https://www.youtube.com/playlist?list=PL7IdJecfX87jHfO43NYd6MXL8mBYWBAIf
+#### Demo 2: Ensure IAM password policy requires at least one number
+Input: Member configs weak IAM password policies 
+=> Fail control IAM.14
+
+#### Demo 3: RDS DB clusters should be configured for multiple AZs
+Input: Admin has a RDS DB instance in only one Availablity Zone.
+=> Fail control RDS.5
+
+#### Demo 4: EBS default encryption should be enabled
+Input: Member has an unencrypted EBS volume.
+=> Fail control EC2.7
+
+#### Demo 5: S3 general purpose buckets should have block public access settings enabled
+Input: Member has a S3 bucket with public acces.
+=> Fail control S3.1
 
 
 
