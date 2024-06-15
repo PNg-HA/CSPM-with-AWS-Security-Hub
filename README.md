@@ -85,5 +85,38 @@ Findings generated in admin-member AWS Security Hub
 Remediation status notification to mail 
 Successfull automated remediation
 
+##### Control Runbook EC2.13
+![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/9bdfabbc-1838-40e0-8ffd-9a21742e1468)
+
+**What does this document do?**
+Removes public access to remove server administrative ports from an EC2 Security Group.
+
+**Input parameters**
+- Finding: Security Hub finding details JSON
+- AutomationAssumeRole: ARN of the role allows automation to perform on your behalf.
+
+**Output parameters**
+Remediation.Output: Output of AWS-DisablePublicAccessForSecurityGroup rubook.
+
+###### Step 1: ParseInput
+Run a python script and eventually extract:
+![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/771555d3-2bdf-4409-aa19-fa0569b97ba4)
+
+###### Step 2: Remediation
+Receive the GroupID and the AssumeRole ARN as inputs, then execute a remediation runbook name "AWS-DisablePublicAccessForSecurityGroup"
+![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/641c5c83-f836-46e0-b25c-46d7fbc2b327)
+
+##### Remediation runbook:
+Receive Security Group ID and IP permissions as inputs
+![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/a4c197a6-9925-462a-b8e7-057f7e47c25d)
+
+![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/7bbc2023-d095-46cf-bb9d-fa18b7007aa7)
+Then call the EC2 API RevokeSecurityGroupIngress:
+![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/6759f7c5-ee19-41f3-8300-ba3d44d816f8)
+
+All video demos are listed in: https://www.youtube.com/playlist?list=PL7IdJecfX87jHfO43NYd6MXL8mBYWBAIf
+
+
+
 
 
