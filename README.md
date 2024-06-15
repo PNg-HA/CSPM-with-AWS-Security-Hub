@@ -74,6 +74,8 @@ Refer to: https://github.com/aws-solutions/automated-security-response-on-aws
 
 ### Demo
 There are 5 demos in this project. However, for shortly, only the first demo has the description about runbooks. All demos listed in: https://www.youtube.com/playlist?list=PL7IdJecfX87jHfO43NYd6MXL8mBYWBAIf
+#### Prequesite
+![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/9c0f3edc-805b-40f7-b1fc-85c723a9eab0)
 
 #### Orchestrator workflow
 ![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/929db750-3807-4da9-af94-4f7bcf0a9dde)
