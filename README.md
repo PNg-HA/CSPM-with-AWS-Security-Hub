@@ -1,5 +1,5 @@
 # Cloud Security Posture Management with AWS Security Hub
-My Cloud Security Posture Management (CSPM) project in NT534 - Advanced security network subject at UIT.
+My Cloud Security Posture Management (CSPM) project in NT534 - Advanced security network subject at UIT. The final presentation: [here](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/blob/main/final/ATMNC_DoAn_final.pptx).
 
 ## Introduction to CSPM
 CSPM tools identify, remediate risks by:
