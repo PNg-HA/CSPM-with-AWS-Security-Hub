@@ -1,0 +1,2372 @@
+{
+ "Description": "(SO0111) AWS Security Hub Automated Response & Remediation Administrator Stack, v2.0.2",
+ "AWSTemplateFormatVersion": "2010-09-09",
+ "Metadata": {
+  "AWS::CloudFormation::Interface": {
+   "ParameterGroups": [
+    {
+     "Label": {
+      "default": "Security Standard Playbooks"
+     },
+     "Parameters": [
+      "LoadAFSBPAdminStack",
+      "LoadCIS120AdminStack",
+      "LoadCIS140AdminStack",
+      "LoadPCI321AdminStack",
+      "LoadSCAdminStack"
+     ]
+    }
+   ]
+  }
+ },
+ "Mappings": {
+  "SourceCode": {
+   "General": {
+    "S3Bucket": "solutions",
+    "KeyPrefix": "aws-security-hub-automated-response-and-remediation/v2.0.2"
+   }
+  },
+  "mappings": {
+   "sendAnonymousMetrics": {
+    "data": "Yes"
+   }
+  },
+  "Solution": {
+   "Data": {
+    "ID": "SO0111",
+    "Version": "v2.0.2",
+    "AppRegistryApplicationName": "automated-security-response-on-aws",
+    "SolutionName": "automated-security-response-on-aws",
+    "ApplicationType": "AWS-Solutions"
+   }
+  },
+  "ServiceprincipalMap": {
+   "af-south-1": {
+    "states": "states.af-south-1.amazonaws.com"
+   },
+   "ap-east-1": {
+    "states": "states.ap-east-1.amazonaws.com"
+   },
+   "ap-northeast-1": {
+    "states": "states.ap-northeast-1.amazonaws.com"
+   },
+   "ap-northeast-2": {
+    "states": "states.ap-northeast-2.amazonaws.com"
+   },
+   "ap-northeast-3": {
+    "states": "states.ap-northeast-3.amazonaws.com"
+   },
+   "ap-south-1": {
+    "states": "states.ap-south-1.amazonaws.com"
+   },
+   "ap-south-2": {
+    "states": "states.ap-south-2.amazonaws.com"
+   },
+   "ap-southeast-1": {
+    "states": "states.ap-southeast-1.amazonaws.com"
+   },
+   "ap-southeast-2": {
+    "states": "states.ap-southeast-2.amazonaws.com"
+   },
+   "ap-southeast-3": {
+    "states": "states.ap-southeast-3.amazonaws.com"
+   },
+   "ca-central-1": {
+    "states": "states.ca-central-1.amazonaws.com"
+   },
+   "cn-north-1": {
+    "states": "states.cn-north-1.amazonaws.com"
+   },
+   "cn-northwest-1": {
+    "states": "states.cn-northwest-1.amazonaws.com"
+   },
+   "eu-central-1": {
+    "states": "states.eu-central-1.amazonaws.com"
+   },
+   "eu-central-2": {
+    "states": "states.eu-central-2.amazonaws.com"
+   },
+   "eu-north-1": {
+    "states": "states.eu-north-1.amazonaws.com"
+   },
+   "eu-south-1": {
+    "states": "states.eu-south-1.amazonaws.com"
+   },
+   "eu-south-2": {
+    "states": "states.eu-south-2.amazonaws.com"
+   },
+   "eu-west-1": {
+    "states": "states.eu-west-1.amazonaws.com"
+   },
+   "eu-west-2": {
+    "states": "states.eu-west-2.amazonaws.com"
+   },
+   "eu-west-3": {
+    "states": "states.eu-west-3.amazonaws.com"
+   },
+   "me-central-1": {
+    "states": "states.me-central-1.amazonaws.com"
+   },
+   "me-south-1": {
+    "states": "states.me-south-1.amazonaws.com"
+   },
+   "sa-east-1": {
+    "states": "states.sa-east-1.amazonaws.com"
+   },
+   "us-east-1": {
+    "states": "states.us-east-1.amazonaws.com"
+   },
+   "us-east-2": {
+    "states": "states.us-east-2.amazonaws.com"
+   },
+   "us-gov-east-1": {
+    "states": "states.us-gov-east-1.amazonaws.com"
+   },
+   "us-gov-west-1": {
+    "states": "states.us-gov-west-1.amazonaws.com"
+   },
+   "us-iso-east-1": {
+    "states": "states.amazonaws.com"
+   },
+   "us-iso-west-1": {
+    "states": "states.amazonaws.com"
+   },
+   "us-isob-east-1": {
+    "states": "states.amazonaws.com"
+   },
+   "us-west-1": {
+    "states": "states.us-west-1.amazonaws.com"
+   },
+   "us-west-2": {
+    "states": "states.us-west-2.amazonaws.com"
+   }
+  }
+ },
+ "Resources": {
+  "SHARRkeyE6BD0F56": {
+   "Type": "AWS::KMS::Key",
+   "Properties": {
+    "EnableKeyRotation": true,
+    "KeyPolicy": {
+     "Statement": [
+      {
+       "Action": [
+        "kms:Encrypt*",
+        "kms:Decrypt*",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:Describe*"
+       ],
+       "Condition": {
+        "ArnEquals": {
+         "kms:EncryptionContext:aws:logs:arn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":logs:",
+            {
+             "Ref": "AWS::Region"
+            },
+            ":",
+            {
+             "Ref": "AWS::AccountId"
+            },
+            ":log-group:SO0111-SHARR-*"
+           ]
+          ]
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Service": [
+         "sns.amazonaws.com",
+         {
+          "Fn::Join": [
+           "",
+           [
+            "logs.",
+            {
+             "Ref": "AWS::URLSuffix"
+            }
+           ]
+          ]
+         }
+        ]
+       },
+       "Resource": "*"
+      },
+      {
+       "Action": "kms:*",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::",
+           {
+            "Ref": "AWS::AccountId"
+           },
+           ":root"
+          ]
+         ]
+        }
+       },
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SHARR-key/Resource"
+   }
+  },
+  "SHARRkeyAlias37E34763": {
+   "Type": "AWS::KMS::Alias",
+   "Properties": {
+    "AliasName": "alias/SO0111-SHARR-Key",
+    "TargetKeyId": {
+     "Fn::GetAtt": [
+      "SHARRkeyE6BD0F56",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SHARR-key/Alias/Resource"
+   }
+  },
+  "SHARRKeyC551FE02": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "KMS Customer Managed Key that SHARR will use to encrypt data",
+    "Name": "/Solutions/SO0111/CMK_ARN",
+    "Type": "String",
+    "Value": {
+     "Fn::GetAtt": [
+      "SHARRkeyE6BD0F56",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SHARR_Key/Resource"
+   }
+  },
+  "SHARRTopic229CFB9E": {
+   "Type": "AWS::SNS::Topic",
+   "Properties": {
+    "DisplayName": "SHARR Playbook Topic (SO0111)",
+    "KmsMasterKeyId": {
+     "Fn::GetAtt": [
+      "SHARRkeyE6BD0F56",
+      "Arn"
+     ]
+    },
+    "TopicName": "SO0111-SHARR_Topic"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SHARR-Topic/Resource"
+   }
+  },
+  "SHARRSNSTopicB940F479": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "SNS Topic ARN where SHARR will send status messages. This        topic can be useful for driving additional actions, such as email notifications,        trouble ticket updates.",
+    "Name": "/Solutions/SO0111/SNS_Topic_ARN",
+    "Type": "String",
+    "Value": {
+     "Ref": "SHARRTopic229CFB9E"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SHARR_SNS_Topic/Resource"
+   }
+  },
+  "SHARRSendAnonymousMetricsCDAE439D": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "Flag to enable or disable sending anonymous metrics.",
+    "Name": "/Solutions/SO0111/sendAnonymousMetrics",
+    "Type": "String",
+    "Value": {
+     "Fn::FindInMap": [
+      "mappings",
+      "sendAnonymousMetrics",
+      "data"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SHARR_SendAnonymousMetrics/Resource"
+   }
+  },
+  "SHARRversionAC0E4F96": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "Solution version for metrics.",
+    "Name": "/Solutions/SO0111/version",
+    "Type": "String",
+    "Value": "v2.0.2"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SHARR_version/Resource"
+   }
+  },
+  "SharrLambdaLayer5BF8F147": {
+   "Type": "AWS::Lambda::LayerVersion",
+   "Properties": {
+    "CompatibleRuntimes": [
+     "python3.9"
+    ],
+    "Content": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/layer.zip"
+    },
+    "Description": "SO0111 SHARR Common functions used by the solution",
+    "LicenseInfo": "https://www.apache.org/licenses/LICENSE-2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/SharrLambdaLayer/Resource"
+   }
+  },
+  "orchestratorPolicy8045810D": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:PutParameter"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":ssm:*:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":parameter/Solutions/SO0111/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":iam::*:role/SO0111-SHARR-Orchestrator-Member"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": "organizations:ListTagsForResource",
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "SO0111-SHARR_Orchestrator",
+    "Roles": [
+     {
+      "Ref": "orchestratorRole46A9F242"
+     }
+    ]
+   },
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W12",
+       "reason": "Resource * is required for read-only policies used by orchestrator Lambda functions."
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Resource * is required for read-only policies used by orchestrator Lambda functions.",
+       "id": "AwsSolutions-IAM5"
+      }
+     ]
+    }
+   }
+  },
+  "orchestratorRole46A9F242": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Lambda role to allow cross account read-only SHARR orchestrator functions",
+    "RoleName": "SO0111-SHARR-Orchestrator-Admin"
+   },
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W28",
+       "reason": "Static names chosen intentionally to provide easy integration with playbook orchestrator step functions."
+      }
+     ]
+    }
+   }
+  },
+  "checkSSMDocState06AC440F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/check_ssm_doc_state.py.zip"
+    },
+    "Description": "Checks the status of an SSM Automation Document in the target account",
+    "Environment": {
+     "Variables": {
+      "log_level": "info",
+      "AWS_PARTITION": {
+       "Ref": "AWS::Partition"
+      },
+      "SOLUTION_ID": "SO0111",
+      "SOLUTION_VERSION": "v2.0.2"
+     }
+    },
+    "FunctionName": "SO0111-SHARR-checkSSMDocState",
+    "Handler": "check_ssm_doc_state.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "SharrLambdaLayer5BF8F147"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "orchestratorRole46A9F242",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "orchestratorRole46A9F242"
+   ],
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W58",
+       "reason": "False positive. Access is provided via a policy"
+      },
+      {
+       "id": "W89",
+       "reason": "There is no need to run this lambda in a VPC"
+      },
+      {
+       "id": "W92",
+       "reason": "There is no need for Reserved Concurrency"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Will upgrade in next release to prioritize patch",
+       "id": "AwsSolutions-L1"
+      }
+     ]
+    }
+   }
+  },
+  "getApprovalRequirementE7F50E54": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/get_approval_requirement.py.zip"
+    },
+    "Description": "Determines if a manual approval is required for remediation",
+    "Environment": {
+     "Variables": {
+      "log_level": "info",
+      "AWS_PARTITION": {
+       "Ref": "AWS::Partition"
+      },
+      "SOLUTION_ID": "SO0111",
+      "SOLUTION_VERSION": "v2.0.2",
+      "WORKFLOW_RUNBOOK": ""
+     }
+    },
+    "FunctionName": "SO0111-SHARR-getApprovalRequirement",
+    "Handler": "get_approval_requirement.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "SharrLambdaLayer5BF8F147"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "orchestratorRole46A9F242",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "orchestratorRole46A9F242"
+   ],
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W58",
+       "reason": "False positive. Access is provided via a policy"
+      },
+      {
+       "id": "W89",
+       "reason": "There is no need to run this lambda in a VPC"
+      },
+      {
+       "id": "W92",
+       "reason": "There is no need for Reserved Concurrency"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Will upgrade in next release to prioritize patch",
+       "id": "AwsSolutions-L1"
+      }
+     ]
+    }
+   }
+  },
+  "execAutomation5D89E251": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/exec_ssm_doc.py.zip"
+    },
+    "Description": "Executes an SSM Automation Document in a target account",
+    "Environment": {
+     "Variables": {
+      "log_level": "info",
+      "AWS_PARTITION": {
+       "Ref": "AWS::Partition"
+      },
+      "SOLUTION_ID": "SO0111",
+      "SOLUTION_VERSION": "v2.0.2"
+     }
+    },
+    "FunctionName": "SO0111-SHARR-execAutomation",
+    "Handler": "exec_ssm_doc.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "SharrLambdaLayer5BF8F147"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "orchestratorRole46A9F242",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "orchestratorRole46A9F242"
+   ],
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W58",
+       "reason": "False positive. Access is provided via a policy"
+      },
+      {
+       "id": "W89",
+       "reason": "There is no need to run this lambda in a VPC"
+      },
+      {
+       "id": "W92",
+       "reason": "There is no need for Reserved Concurrency"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Will upgrade in next release to prioritize patch",
+       "id": "AwsSolutions-L1"
+      }
+     ]
+    }
+   }
+  },
+  "monitorSSMExecStateB496B8AF": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/check_ssm_execution.py.zip"
+    },
+    "Description": "Checks the status of an SSM automation document execution",
+    "Environment": {
+     "Variables": {
+      "log_level": "info",
+      "AWS_PARTITION": {
+       "Ref": "AWS::Partition"
+      },
+      "SOLUTION_ID": "SO0111",
+      "SOLUTION_VERSION": "v2.0.2"
+     }
+    },
+    "FunctionName": "SO0111-SHARR-monitorSSMExecState",
+    "Handler": "check_ssm_execution.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "SharrLambdaLayer5BF8F147"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "orchestratorRole46A9F242",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "orchestratorRole46A9F242"
+   ],
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W58",
+       "reason": "False positive. Access is provided via a policy"
+      },
+      {
+       "id": "W89",
+       "reason": "There is no need to run this lambda in a VPC"
+      },
+      {
+       "id": "W92",
+       "reason": "There is no need for Reserved Concurrency"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Will upgrade in next release to prioritize patch",
+       "id": "AwsSolutions-L1"
+      }
+     ]
+    }
+   }
+  },
+  "notifyPolicy320847DC": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": "securityhub:BatchUpdateFindings",
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "ssm:GetParameter",
+        "ssm:PutParameter"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":ssm:",
+          {
+           "Ref": "AWS::Region"
+          },
+          ":",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":parameter/Solutions/SO0111/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:GenerateDataKey"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "SHARRkeyE6BD0F56",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": "sns:Publish",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":sns:",
+          {
+           "Ref": "AWS::Region"
+          },
+          ":",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":SO0111-SHARR_Topic"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "SO0111-SHARR_Orchestrator_Notifier",
+    "Roles": [
+     {
+      "Ref": "orchestratorRole46A9F242"
+     },
+     {
+      "Ref": "notifyRole40298120"
+     }
+    ]
+   },
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W12",
+       "reason": "Resource * is required for CloudWatch Logs and Security Hub policies used by core solution Lambda function for notifications."
+      },
+      {
+       "id": "W58",
+       "reason": "False positive. Access is provided via a policy"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Resource * is required for CloudWatch Logs and Security Hub policies used by core solution Lambda function for notifications.",
+       "id": "AwsSolutions-IAM5"
+      }
+     ]
+    }
+   }
+  },
+  "notifyRole40298120": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Lambda role to perform notification and logging from orchestrator step function"
+   },
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W28",
+       "reason": "Static names chosen intentionally to provide easy integration with playbook orchestrator step functions."
+      }
+     ]
+    }
+   }
+  },
+  "sendNotifications1367638A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/send_notifications.py.zip"
+    },
+    "Description": "Sends notifications and log messages",
+    "Environment": {
+     "Variables": {
+      "log_level": "info",
+      "AWS_PARTITION": {
+       "Ref": "AWS::Partition"
+      },
+      "SOLUTION_ID": "SO0111",
+      "SOLUTION_VERSION": "v2.0.2"
+     }
+    },
+    "FunctionName": "SO0111-SHARR-sendNotifications",
+    "Handler": "send_notifications.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "SharrLambdaLayer5BF8F147"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "notifyRole40298120",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "notifyRole40298120"
+   ],
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W58",
+       "reason": "False positive. Access is provided via a policy"
+      },
+      {
+       "id": "W89",
+       "reason": "There is no need to run this lambda in a VPC"
+      },
+      {
+       "id": "W92",
+       "reason": "There is no need for Reserved Concurrency due to low request rate"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Will upgrade in next release to prioritize patch",
+       "id": "AwsSolutions-L1"
+      }
+     ]
+    }
+   }
+  },
+  "createCustomActionPolicyE424E925": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "cloudwatch:PutMetricData",
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "securityhub:CreateActionTarget",
+        "securityhub:DeleteActionTarget"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:PutParameter"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":ssm:*:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":parameter/Solutions/SO0111/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "SO0111-SHARR_Custom_Action",
+    "Roles": [
+     {
+      "Ref": "createCustomActionRoleF0047414"
+     }
+    ]
+   },
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W12",
+       "reason": "Resource * is required for CloudWatch Logs policies used on Lambda functions."
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Resource * is required for CloudWatch Logs policies used on Lambda functions.",
+       "id": "AwsSolutions-IAM5"
+      }
+     ]
+    }
+   }
+  },
+  "createCustomActionRoleF0047414": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Lambda role to allow creation of Security Hub Custom Actions"
+   },
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W28",
+       "reason": "Static names chosen intentionally to provide easy integration with playbook templates"
+      }
+     ]
+    }
+   }
+  },
+  "CreateCustomActionE7A973F5": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/action_target_provider.zip"
+    },
+    "Description": "Custom resource to create an action target in Security Hub",
+    "Environment": {
+     "Variables": {
+      "log_level": "info",
+      "AWS_PARTITION": {
+       "Ref": "AWS::Partition"
+      },
+      "sendAnonymousMetrics": {
+       "Fn::FindInMap": [
+        "mappings",
+        "sendAnonymousMetrics",
+        "data"
+       ]
+      },
+      "SOLUTION_ID": "SO0111",
+      "SOLUTION_VERSION": "v2.0.2"
+     }
+    },
+    "FunctionName": "SO0111-SHARR-CustomAction",
+    "Handler": "action_target_provider.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "SharrLambdaLayer5BF8F147"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "createCustomActionRoleF0047414",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "createCustomActionRoleF0047414"
+   ],
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W58",
+       "reason": "False positive. the lambda role allows write to CW Logs"
+      },
+      {
+       "id": "W89",
+       "reason": "There is no need to run this lambda in a VPC"
+      },
+      {
+       "id": "W92",
+       "reason": "There is no need for Reserved Concurrency due to low request rate"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Will upgrade in next release to prioritize patch",
+       "id": "AwsSolutions-L1"
+      }
+     ]
+    }
+   }
+  },
+  "orchestratorNestedLogStackNestedStackNestedLogStackNestedStackResourceE4E042A6": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "Parameters": {
+     "KmsKeyArn": {
+      "Fn::GetAtt": [
+       "SHARRKeyC551FE02",
+       "Value"
+      ]
+     },
+     "ReuseOrchestratorLogGroup": {
+      "Ref": "ReuseOrchestratorLogGroup"
+     }
+    },
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/aws-sharr-orchestrator-log.template"
+      ]
+     ]
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/orchestrator/NestedLogStack.NestedStack/NestedLogStack.NestedStackResource",
+    "aws:asset:path": "SolutionDeployStackorchestratorNestedLogStack543D2DA7.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   }
+  },
+  "orchestratorRole12B410FD": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": {
+         "Fn::FindInMap": [
+          "ServiceprincipalMap",
+          {
+           "Ref": "AWS::Region"
+          },
+          "states"
+         ]
+        }
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "logs:CreateLogDelivery",
+          "logs:GetLogDelivery",
+          "logs:UpdateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+          "logs:DescribeResourcePolicies",
+          "logs:DescribeLogGroups"
+         ],
+         "Effect": "Allow",
+         "Resource": "*"
+        },
+        {
+         "Action": "lambda:InvokeFunction",
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:",
+             {
+              "Ref": "AWS::Partition"
+             },
+             ":lambda:",
+             {
+              "Ref": "AWS::Region"
+             },
+             ":",
+             {
+              "Ref": "AWS::AccountId"
+             },
+             ":function:",
+             {
+              "Fn::Select": [
+               6,
+               {
+                "Fn::Split": [
+                 ":",
+                 {
+                  "Fn::GetAtt": [
+                   "checkSSMDocState06AC440F",
+                   "Arn"
+                  ]
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:",
+             {
+              "Ref": "AWS::Partition"
+             },
+             ":lambda:",
+             {
+              "Ref": "AWS::Region"
+             },
+             ":",
+             {
+              "Ref": "AWS::AccountId"
+             },
+             ":function:",
+             {
+              "Fn::Select": [
+               6,
+               {
+                "Fn::Split": [
+                 ":",
+                 {
+                  "Fn::GetAtt": [
+                   "execAutomation5D89E251",
+                   "Arn"
+                  ]
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:",
+             {
+              "Ref": "AWS::Partition"
+             },
+             ":lambda:",
+             {
+              "Ref": "AWS::Region"
+             },
+             ":",
+             {
+              "Ref": "AWS::AccountId"
+             },
+             ":function:",
+             {
+              "Fn::Select": [
+               6,
+               {
+                "Fn::Split": [
+                 ":",
+                 {
+                  "Fn::GetAtt": [
+                   "monitorSSMExecStateB496B8AF",
+                   "Arn"
+                  ]
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:",
+             {
+              "Ref": "AWS::Partition"
+             },
+             ":lambda:",
+             {
+              "Ref": "AWS::Region"
+             },
+             ":",
+             {
+              "Ref": "AWS::AccountId"
+             },
+             ":function:",
+             {
+              "Fn::Select": [
+               6,
+               {
+                "Fn::Split": [
+                 ":",
+                 {
+                  "Fn::GetAtt": [
+                   "sendNotifications1367638A",
+                   "Arn"
+                  ]
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:",
+             {
+              "Ref": "AWS::Partition"
+             },
+             ":lambda:",
+             {
+              "Ref": "AWS::Region"
+             },
+             ":",
+             {
+              "Ref": "AWS::AccountId"
+             },
+             ":function:",
+             {
+              "Fn::Select": [
+               6,
+               {
+                "Fn::Split": [
+                 ":",
+                 {
+                  "Fn::GetAtt": [
+                   "getApprovalRequirementE7F50E54",
+                   "Arn"
+                  ]
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           ]
+          }
+         ]
+        },
+        {
+         "Action": [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+         ],
+         "Effect": "Allow",
+         "Resource": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":kms:",
+            {
+             "Ref": "AWS::Region"
+            },
+            ":",
+            {
+             "Ref": "AWS::AccountId"
+            },
+            ":alias/SO0111-SHARR-Key"
+           ]
+          ]
+         }
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "BasePolicy"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W11",
+       "reason": "CloudWatch Logs permissions require resource * except for DescribeLogGroups, except for GovCloud, which only works with resource *"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "CloudWatch Logs permissions require resource * except for DescribeLogGroups, except for GovCloud, which only works with resource *",
+       "id": "AwsSolutions-IAM5"
+      }
+     ]
+    }
+   }
+  },
+  "orchestratorStateMachine77C3F8FB": {
+   "Type": "AWS::StepFunctions::StateMachine",
+   "Properties": {
+    "DefinitionString": {
+     "Fn::Join": [
+      "",
+      [
+       "{\"StartAt\":\"Get Finding Data from Input\",\"States\":{\"Get Finding Data from Input\":{\"Type\":\"Pass\",\"Comment\":\"Extract top-level data needed for remediation\",\"Parameters\":{\"EventType.$\":\"$.detail-type\",\"Findings.$\":\"$.detail.findings\"},\"Next\":\"Process Findings\"},\"Process Findings\":{\"Type\":\"Map\",\"Comment\":\"Process all findings in CloudWatch Event\",\"Next\":\"EOJ\",\"Parameters\":{\"Finding.$\":\"$$.Map.Item.Value\",\"EventType.$\":\"$.EventType\"},\"Iterator\":{\"StartAt\":\"Finding Workflow State NEW?\",\"States\":{\"Finding Workflow State NEW?\":{\"Type\":\"Choice\",\"Choices\":[{\"Or\":[{\"Variable\":\"$.EventType\",\"StringEquals\":\"Security Hub Findings - Custom Action\"},{\"And\":[{\"Variable\":\"$.Finding.Workflow.Status\",\"StringEquals\":\"NEW\"},{\"Variable\":\"$.EventType\",\"StringEquals\":\"Security Hub Findings - Imported\"}]}],\"Next\":\"Get Remediation Approval Requirement\"}],\"Default\":\"Finding Workflow State is not NEW\"},\"Finding Workflow State is not NEW\":{\"Type\":\"Pass\",\"Parameters\":{\"Notification\":{\"Message.$\":\"States.Format('Finding Workflow State is not NEW ({}).', $.Finding.Workflow.Status)\",\"State.$\":\"States.Format('NOTNEW')\"},\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\"},\"Next\":\"notify\"},\"notify\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"Comment\":\"Send notifications\",\"TimeoutSeconds\":300,\"HeartbeatSeconds\":60,\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "sendNotifications1367638A",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"Automation Document is not Active\":{\"Type\":\"Pass\",\"Parameters\":{\"Notification\":{\"Message.$\":\"States.Format('Automation Document ({}) is not active ({}) in the member account({}).', $.AutomationDocId, $.AutomationDocument.DocState, $.Finding.AwsAccountId)\",\"State.$\":\"States.Format('REMEDIATIONNOTACTIVE')\",\"updateSecHub\":\"yes\"},\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\",\"AccountId.$\":\"$.AutomationDocument.AccountId\",\"AutomationDocId.$\":\"$.AutomationDocument.AutomationDocId\",\"RemediationRole.$\":\"$.AutomationDocument.RemediationRole\",\"ControlId.$\":\"$.AutomationDocument.ControlId\",\"SecurityStandard.$\":\"$.AutomationDocument.SecurityStandard\",\"SecurityStandardVersion.$\":\"$.AutomationDocument.SecurityStandardVersion\"},\"Next\":\"notify\"},\"Automation Doc Active?\":{\"Type\":\"Choice\",\"Choices\":[{\"Variable\":\"$.AutomationDocument.DocState\",\"StringEquals\":\"ACTIVE\",\"Next\":\"Execute Remediation\"},{\"Variable\":\"$.AutomationDocument.DocState\",\"StringEquals\":\"NOTACTIVE\",\"Next\":\"Automation Document is not Active\"},{\"Variable\":\"$.AutomationDocument.DocState\",\"StringEquals\":\"NOTENABLED\",\"Next\":\"Security Standard is not enabled\"},{\"Variable\":\"$.AutomationDocument.DocState\",\"StringEquals\":\"NOTFOUND\",\"Next\":\"No Remediation for Control\"}],\"Default\":\"check_ssm_doc_state Error\"},\"Get Automation Document State\":{\"Next\":\"Automation Doc Active?\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"Next\":\"Orchestrator Failed\"}],\"Type\":\"Task\",\"Comment\":\"Get the status of the remediation automation document in the target account\",\"TimeoutSeconds\":60,\"ResultPath\":\"$.AutomationDocument\",\"ResultSelector\":{\"DocState.$\":\"$.Payload.status\",\"Message.$\":\"$.Payload.message\",\"SecurityStandard.$\":\"$.Payload.securitystandard\",\"SecurityStandardVersion.$\":\"$.Payload.securitystandardversion\",\"SecurityStandardSupported.$\":\"$.Payload.standardsupported\",\"ControlId.$\":\"$.Payload.controlid\",\"AccountId.$\":\"$.Payload.accountid\",\"RemediationRole.$\":\"$.Payload.remediationrole\",\"AutomationDocId.$\":\"$.Payload.automationdocid\",\"ResourceRegion.$\":\"$.Payload.resourceregion\"},\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "checkSSMDocState06AC440F",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"Get Remediation Approval Requirement\":{\"Next\":\"Get Automation Document State\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"Next\":\"Orchestrator Failed\"}],\"Type\":\"Task\",\"Comment\":\"Determine whether the selected remediation requires manual approval\",\"TimeoutSeconds\":300,\"ResultPath\":\"$.Workflow\",\"ResultSelector\":{\"WorkflowDocument.$\":\"$.Payload.workflowdoc\",\"WorkflowAccount.$\":\"$.Payload.workflowaccount\",\"WorkflowRole.$\":\"$.Payload.workflowrole\",\"WorkflowConfig.$\":\"$.Payload.workflow_data\"},\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "getApprovalRequirementE7F50E54",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"Orchestrator Failed\":{\"Type\":\"Pass\",\"Parameters\":{\"Notification\":{\"Message.$\":\"States.Format('Orchestrator failed: {}', $.Error)\",\"State.$\":\"States.Format('LAMBDAERROR')\",\"Details.$\":\"States.Format('Cause: {}', $.Cause)\"},\"Payload.$\":\"$\"},\"Next\":\"notify\"},\"Execute Remediation\":{\"Next\":\"Remediation Queued\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"Next\":\"Orchestrator Failed\"}],\"Type\":\"Task\",\"Comment\":\"Execute the SSM Automation Document in the target account\",\"TimeoutSeconds\":300,\"HeartbeatSeconds\":60,\"ResultPath\":\"$.SSMExecution\",\"ResultSelector\":{\"ExecState.$\":\"$.Payload.status\",\"Message.$\":\"$.Payload.message\",\"ExecId.$\":\"$.Payload.executionid\",\"Account.$\":\"$.Payload.executionaccount\",\"Region.$\":\"$.Payload.executionregion\"},\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "execAutomation5D89E251",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"Remediation Queued\":{\"Type\":\"Pass\",\"Comment\":\"Set parameters for notification\",\"Parameters\":{\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\",\"AutomationDocument.$\":\"$.AutomationDocument\",\"SSMExecution.$\":\"$.SSMExecution\",\"Notification\":{\"Message.$\":\"States.Format('Remediation queued for {} control {} in account {}', $.AutomationDocument.SecurityStandard, $.AutomationDocument.ControlId, $.AutomationDocument.AccountId)\",\"State.$\":\"States.Format('QUEUED')\",\"ExecId.$\":\"$.SSMExecution.ExecId\"}},\"Next\":\"Queued Notification\"},\"Queued Notification\":{\"Next\":\"execMonitor\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"Comment\":\"Send notification that a remediation has queued\",\"TimeoutSeconds\":300,\"HeartbeatSeconds\":60,\"ResultPath\":\"$.notificationResult\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "sendNotifications1367638A",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"execMonitor\":{\"Next\":\"Remediation completed?\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"Next\":\"Orchestrator Failed\"}],\"Type\":\"Task\",\"Comment\":\"Monitor the remediation execution until done\",\"TimeoutSeconds\":300,\"HeartbeatSeconds\":60,\"ResultPath\":\"$.Remediation\",\"ResultSelector\":{\"ExecState.$\":\"$.Payload.status\",\"ExecId.$\":\"$.Payload.executionid\",\"RemediationState.$\":\"$.Payload.remediation_status\",\"Message.$\":\"$.Payload.message\",\"LogData.$\":\"$.Payload.logdata\",\"AffectedObject.$\":\"$.Payload.affected_object\"},\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "monitorSSMExecStateB496B8AF",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"Wait for Remediation\":{\"Type\":\"Wait\",\"Seconds\":15,\"Next\":\"execMonitor\"},\"Remediation completed?\":{\"Type\":\"Choice\",\"Choices\":[{\"Variable\":\"$.Remediation.RemediationState\",\"StringEquals\":\"Failed\",\"Next\":\"Remediation Failed\"},{\"Variable\":\"$.Remediation.ExecState\",\"StringEquals\":\"Success\",\"Next\":\"Remediation Succeeded\"},{\"Variable\":\"$.Remediation.ExecState\",\"StringEquals\":\"TimedOut\",\"Next\":\"Remediation Failed\"},{\"Variable\":\"$.Remediation.ExecState\",\"StringEquals\":\"Cancelling\",\"Next\":\"Remediation Failed\"},{\"Variable\":\"$.Remediation.ExecState\",\"StringEquals\":\"Cancelled\",\"Next\":\"Remediation Failed\"},{\"Variable\":\"$.Remediation.ExecState\",\"StringEquals\":\"Failed\",\"Next\":\"Remediation Failed\"}],\"Default\":\"Wait for Remediation\"},\"Remediation Failed\":{\"Type\":\"Pass\",\"Comment\":\"Set parameters for notification\",\"Parameters\":{\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\",\"SSMExecution.$\":\"$.SSMExecution\",\"AutomationDocument.$\":\"$.AutomationDocument\",\"Notification\":{\"Message.$\":\"States.Format('Remediation failed for {} control {} in account {}: {}', $.AutomationDocument.SecurityStandard, $.AutomationDocument.ControlId, $.AutomationDocument.AccountId, $.Remediation.Message)\",\"State.$\":\"$.Remediation.ExecState\",\"Details.$\":\"$.Remediation.LogData\",\"ExecId.$\":\"$.Remediation.ExecId\",\"AffectedObject.$\":\"$.Remediation.AffectedObject\"}},\"Next\":\"notify\"},\"Remediation Succeeded\":{\"Type\":\"Pass\",\"Comment\":\"Set parameters for notification\",\"Parameters\":{\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\",\"AccountId.$\":\"$.AutomationDocument.AccountId\",\"AutomationDocId.$\":\"$.AutomationDocument.AutomationDocId\",\"RemediationRole.$\":\"$.AutomationDocument.RemediationRole\",\"ControlId.$\":\"$.AutomationDocument.ControlId\",\"SecurityStandard.$\":\"$.AutomationDocument.SecurityStandard\",\"SecurityStandardVersion.$\":\"$.AutomationDocument.SecurityStandardVersion\",\"Notification\":{\"Message.$\":\"States.Format('Remediation succeeded for {} control {} in account {}: {}', $.AutomationDocument.SecurityStandard, $.AutomationDocument.ControlId, $.AutomationDocument.AccountId, $.Remediation.Message)\",\"State.$\":\"States.Format('SUCCESS')\",\"Details.$\":\"$.Remediation.LogData\",\"ExecId.$\":\"$.Remediation.ExecId\",\"AffectedObject.$\":\"$.Remediation.AffectedObject\"}},\"Next\":\"notify\"},\"check_ssm_doc_state Error\":{\"Type\":\"Pass\",\"Parameters\":{\"Notification\":{\"Message.$\":\"States.Format('check_ssm_doc_state returned an error: {}', $.AutomationDocument.Message)\",\"State.$\":\"States.Format('LAMBDAERROR')\"},\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\"},\"Next\":\"notify\"},\"Security Standard is not enabled\":{\"Type\":\"Pass\",\"Parameters\":{\"Notification\":{\"Message.$\":\"States.Format('Security Standard ({}) v{} is not enabled.', $.AutomationDocument.SecurityStandard, $.AutomationDocument.SecurityStandardVersion)\",\"State.$\":\"States.Format('STANDARDNOTENABLED')\",\"updateSecHub\":\"yes\"},\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\",\"AccountId.$\":\"$.AutomationDocument.AccountId\",\"AutomationDocId.$\":\"$.AutomationDocument.AutomationDocId\",\"RemediationRole.$\":\"$.AutomationDocument.RemediationRole\",\"ControlId.$\":\"$.AutomationDocument.ControlId\",\"SecurityStandard.$\":\"$.AutomationDocument.SecurityStandard\",\"SecurityStandardVersion.$\":\"$.AutomationDocument.SecurityStandardVersion\"},\"Next\":\"notify\"},\"No Remediation for Control\":{\"Type\":\"Pass\",\"Parameters\":{\"Notification\":{\"Message.$\":\"States.Format('Security Standard {} v{} control {} has no automated remediation.', $.AutomationDocument.SecurityStandard, $.AutomationDocument.SecurityStandardVersion, $.AutomationDocument.ControlId)\",\"State.$\":\"States.Format('NOREMEDIATION')\",\"updateSecHub\":\"yes\"},\"EventType.$\":\"$.EventType\",\"Finding.$\":\"$.Finding\",\"AccountId.$\":\"$.AutomationDocument.AccountId\",\"AutomationDocId.$\":\"$.AutomationDocument.AutomationDocId\",\"RemediationRole.$\":\"$.AutomationDocument.RemediationRole\",\"ControlId.$\":\"$.AutomationDocument.ControlId\",\"SecurityStandard.$\":\"$.AutomationDocument.SecurityStandard\",\"SecurityStandardVersion.$\":\"$.AutomationDocument.SecurityStandardVersion\"},\"Next\":\"notify\"}}},\"ItemsPath\":\"$.Findings\"},\"EOJ\":{\"Type\":\"Pass\",\"Comment\":\"END-OF-JOB\",\"End\":true}},\"TimeoutSeconds\":900}"
+      ]
+     ]
+    },
+    "LoggingConfiguration": {
+     "Destinations": [
+      {
+       "CloudWatchLogsLogGroup": {
+        "LogGroupArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:",
+           {
+            "Ref": "AWS::Region"
+           },
+           ":",
+           {
+            "Ref": "AWS::AccountId"
+           },
+           ":log-group:SO0111-SHARR-Orchestrator:*"
+          ]
+         ]
+        }
+       }
+      }
+     ],
+     "IncludeExecutionData": true,
+     "Level": "ALL"
+    },
+    "RoleArn": {
+     "Fn::GetAtt": [
+      "orchestratorRole12B410FD",
+      "Arn"
+     ]
+    },
+    "StateMachineName": "SO0111-SHARR-Orchestrator"
+   },
+   "DependsOn": [
+    "orchestratorNestedLogStackNestedStackNestedLogStackNestedStackResourceE4E042A6",
+    "orchestratorRole12B410FD"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/orchestrator/StateMachine/Resource",
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "False alarm. Logging configuration is overridden to log ALL.",
+       "id": "AwsSolutions-SF1"
+      },
+      {
+       "reason": "X-Ray is not needed for this use case.",
+       "id": "AwsSolutions-SF2"
+      }
+     ]
+    }
+   }
+  },
+  "orchestratorSHARROrchestratorArn0ACC7B05": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "Arn of the SHARR Orchestrator Step Function. This step function routes findings to remediation runbooks.",
+    "Name": "/Solutions/SO0111/OrchestratorArn",
+    "Type": "String",
+    "Value": {
+     "Ref": "orchestratorStateMachine77C3F8FB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/orchestrator/SHARR_Orchestrator_Arn/Resource"
+   }
+  },
+  "RemediateWithSharrCustomActionABE4122A": {
+   "Type": "Custom::ActionTarget",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CreateCustomActionE7A973F5",
+      "Arn"
+     ]
+    },
+    "Name": "Remediate with ASR",
+    "Description": "Submit the finding to AWS Security Hub Automated Response and Remediation",
+    "Id": "ASRRemediation"
+   },
+   "DependsOn": [
+    "CreateCustomActionE7A973F5",
+    "createCustomActionPolicyE424E925"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/RemediateWithSharr/Custom Action/Default"
+   }
+  },
+  "RemediateWithSharrEventsRuleRole4BE0B6FF": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "events.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/RemediateWithSharr/EventsRuleRole/Resource"
+   }
+  },
+  "RemediateWithSharrEventsRuleRoleDefaultPolicy44783695": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "states:StartExecution",
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "orchestratorStateMachine77C3F8FB"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "RemediateWithSharrEventsRuleRoleDefaultPolicy44783695",
+    "Roles": [
+     {
+      "Ref": "RemediateWithSharrEventsRuleRole4BE0B6FF"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/RemediateWithSharr/EventsRuleRole/DefaultPolicy/Resource"
+   }
+  },
+  "RemediateWithSharrRemediateCustomAction40B496D2": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "Description": "Remediate with ASR",
+    "EventPattern": {
+     "source": [
+      "aws.securityhub"
+     ],
+     "detail-type": [
+      "Security Hub Findings - Custom Action"
+     ],
+     "resources": [
+      {
+       "Fn::GetAtt": [
+        "RemediateWithSharrCustomActionABE4122A",
+        "Arn"
+       ]
+      }
+     ],
+     "detail": {
+      "findings": {
+       "Compliance": {
+        "Status": [
+         "FAILED",
+         "WARNING"
+        ]
+       }
+      }
+     }
+    },
+    "Name": "Remediate_with_SHARR_CustomAction",
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Ref": "orchestratorStateMachine77C3F8FB"
+      },
+      "Id": "Target0",
+      "RoleArn": {
+       "Fn::GetAtt": [
+        "RemediateWithSharrEventsRuleRole4BE0B6FF",
+        "Arn"
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/RemediateWithSharr/Remediate Custom Action/Resource"
+   }
+  },
+  "PlaybookAdminStackAFSBP": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/AFSBPStack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "orchestratorSHARROrchestratorArn0ACC7B05",
+    "orchestratorStateMachine77C3F8FB"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/PlaybookAdminStackAFSBP.NestedStack/PlaybookAdminStackAFSBP.NestedStackResource",
+    "aws:asset:path": "SolutionDeployStackPlaybookAdminStackAFSBP3C973085.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadAFSBPCond"
+  },
+  "PlaybookAdminStackCIS120": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/CIS120Stack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "orchestratorSHARROrchestratorArn0ACC7B05",
+    "orchestratorStateMachine77C3F8FB"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/PlaybookAdminStackCIS120.NestedStack/PlaybookAdminStackCIS120.NestedStackResource",
+    "aws:asset:path": "SolutionDeployStackPlaybookAdminStackCIS1206FD5DBB4.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadCIS120Cond"
+  },
+  "PlaybookAdminStackCIS140": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/CIS140Stack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "orchestratorSHARROrchestratorArn0ACC7B05",
+    "orchestratorStateMachine77C3F8FB"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/PlaybookAdminStackCIS140.NestedStack/PlaybookAdminStackCIS140.NestedStackResource",
+    "aws:asset:path": "SolutionDeployStackPlaybookAdminStackCIS140C498D481.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadCIS140Cond"
+  },
+  "PlaybookAdminStackPCI321": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/PCI321Stack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "orchestratorSHARROrchestratorArn0ACC7B05",
+    "orchestratorStateMachine77C3F8FB"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/PlaybookAdminStackPCI321.NestedStack/PlaybookAdminStackPCI321.NestedStackResource",
+    "aws:asset:path": "SolutionDeployStackPlaybookAdminStackPCI321E25ED866.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadPCI321Cond"
+  },
+  "PlaybookAdminStackSC": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "SourceCode",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/SCStack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "orchestratorSHARROrchestratorArn0ACC7B05",
+    "orchestratorStateMachine77C3F8FB"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/PlaybookAdminStackSC.NestedStack/PlaybookAdminStackSC.NestedStackResource",
+    "aws:asset:path": "SolutionDeployStackPlaybookAdminStackSC9E2028D9.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadSCCond"
+  },
+  "AppRegistry968496A3": {
+   "Type": "AWS::ServiceCatalogAppRegistry::Application",
+   "Properties": {
+    "Description": "Service Catalog application to track and manage all your resources for the solution automated-security-response-on-aws",
+    "Name": {
+     "Fn::Join": [
+      "-",
+      [
+       {
+        "Fn::FindInMap": [
+         "Solution",
+         "Data",
+         "AppRegistryApplicationName"
+        ]
+       },
+       {
+        "Ref": "AWS::StackName"
+       },
+       {
+        "Ref": "AWS::Region"
+       },
+       {
+        "Ref": "AWS::AccountId"
+       }
+      ]
+     ]
+    },
+    "Tags": {
+     "Solutions:ApplicationType": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ApplicationType"
+      ]
+     },
+     "Solutions:SolutionID": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ID"
+      ]
+     },
+     "Solutions:SolutionName": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "SolutionName"
+      ]
+     },
+     "Solutions:SolutionVersion": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "Version"
+      ]
+     }
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/Resource"
+   }
+  },
+  "AppRegistryAttributeGroupAssociation755d1805d7f17C59C664": {
+   "Type": "AWS::ServiceCatalogAppRegistry::AttributeGroupAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "AttributeGroup": {
+     "Fn::GetAtt": [
+      "DefaultApplicationAttributesFC1CC26B",
+      "Id"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/AttributeGroupAssociation755d1805d7f1"
+   }
+  },
+  "AppRegistryResourceAssociation142839FB0": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "orchestratorNestedLogStackNestedStackNestedLogStackNestedStackResourceE4E042A6"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "orchestratorNestedLogStackNestedStackNestedLogStackNestedStackResourceE4E042A6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/ResourceAssociation1"
+   }
+  },
+  "AppRegistryResourceAssociation2BB1A3300": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookAdminStackAFSBP"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookAdminStackAFSBP"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/ResourceAssociation2"
+   },
+   "Condition": "loadAFSBPCond"
+  },
+  "AppRegistryResourceAssociation3BEAC7BB7": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookAdminStackCIS120"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookAdminStackCIS120"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/ResourceAssociation3"
+   },
+   "Condition": "loadCIS120Cond"
+  },
+  "AppRegistryResourceAssociation46F7B9873": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookAdminStackCIS140"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookAdminStackCIS140"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/ResourceAssociation4"
+   },
+   "Condition": "loadCIS140Cond"
+  },
+  "AppRegistryResourceAssociation5FAA30631": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookAdminStackPCI321"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookAdminStackPCI321"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/ResourceAssociation5"
+   },
+   "Condition": "loadPCI321Cond"
+  },
+  "AppRegistryResourceAssociation62B582FF5": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookAdminStackSC"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookAdminStackSC"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistry/ResourceAssociation6"
+   },
+   "Condition": "loadSCCond"
+  },
+  "AppRegistryAssociation": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "AWS::StackId"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/AppRegistryAssociation"
+   }
+  },
+  "DefaultApplicationAttributesFC1CC26B": {
+   "Type": "AWS::ServiceCatalogAppRegistry::AttributeGroup",
+   "Properties": {
+    "Attributes": {
+     "applicationType": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ApplicationType"
+      ]
+     },
+     "version": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "Version"
+      ]
+     },
+     "solutionID": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ID"
+      ]
+     },
+     "solutionName": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "SolutionName"
+      ]
+     }
+    },
+    "Description": "Attribute group for solution information",
+    "Name": {
+     "Fn::Join": [
+      "",
+      [
+       "ASR-",
+       {
+        "Ref": "AWS::StackName"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SolutionDeployStack/DefaultApplicationAttributes/Resource"
+   }
+  }
+ },
+ "Parameters": {
+  "ReuseOrchestratorLogGroup": {
+   "Type": "String",
+   "Default": "no",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Reuse existing Orchestrator Log Group? Choose \"yes\" if the log group already exists, else \"no\""
+  },
+  "LoadAFSBPAdminStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load CloudWatch Event Rules for AFSBP?"
+  },
+  "LoadCIS120AdminStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load CloudWatch Event Rules for CIS120?"
+  },
+  "LoadCIS140AdminStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load CloudWatch Event Rules for CIS140?"
+  },
+  "LoadPCI321AdminStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load CloudWatch Event Rules for PCI321?"
+  },
+  "LoadSCAdminStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load CloudWatch Event Rules for SC?"
+  }
+ },
+ "Conditions": {
+  "loadAFSBPCond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadAFSBPAdminStack"
+    },
+    "yes"
+   ]
+  },
+  "loadCIS120Cond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadCIS120AdminStack"
+    },
+    "yes"
+   ]
+  },
+  "loadCIS140Cond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadCIS140AdminStack"
+    },
+    "yes"
+   ]
+  },
+  "loadPCI321Cond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadPCI321AdminStack"
+    },
+    "yes"
+   ]
+  },
+  "loadSCCond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadSCAdminStack"
+    },
+    "yes"
+   ]
+  }
+ }
+}

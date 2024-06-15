@@ -1,0 +1,1278 @@
+{
+ "Description": "(SO0111M) AWS Security Hub Automated Response & Remediation Member Account Stack, v2.0.2",
+ "AWSTemplateFormatVersion": "2010-09-09",
+ "Metadata": {
+  "AWS::CloudFormation::Interface": {
+   "ParameterGroups": [
+    {
+     "Label": {
+      "default": "LogGroup Configuration"
+     },
+     "Parameters": [
+      "LogGroupName"
+     ]
+    },
+    {
+     "Label": {
+      "default": "Playbooks"
+     },
+     "Parameters": [
+      "LoadAFSBPMemberStack",
+      "LoadCIS120MemberStack",
+      "LoadCIS140MemberStack",
+      "LoadPCI321MemberStack",
+      "LoadSCMemberStack"
+     ]
+    }
+   ],
+   "ParameterLabels": {
+    "LogGroupName": {
+     "default": "Provide the name of the LogGroup to be used to create Metric Filters and Alarms"
+    }
+   }
+  }
+ },
+ "Parameters": {
+  "SecHubAdminAccount": {
+   "Type": "String",
+   "AllowedPattern": "^\\d{12}$",
+   "Description": "Admin account number"
+  },
+  "CreateS3BucketForRedshiftAuditLogging": {
+   "Type": "String",
+   "Default": "no",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Create S3 Bucket For Redshift Cluster Audit Logging."
+  },
+  "LogGroupName": {
+   "Type": "String",
+   "Description": "Name of the log group to be used to create metric filters and cloudwatch alarms. You must use a Log Group that is the the logging destination of a multi-region CloudTrail"
+  },
+  "LoadAFSBPMemberStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load Playbook member stack for AFSBP?"
+  },
+  "LoadCIS120MemberStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load Playbook member stack for CIS120?"
+  },
+  "LoadCIS140MemberStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load Playbook member stack for CIS140?"
+  },
+  "LoadPCI321MemberStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load Playbook member stack for PCI321?"
+  },
+  "LoadSCMemberStack": {
+   "Type": "String",
+   "Default": "yes",
+   "AllowedValues": [
+    "yes",
+    "no"
+   ],
+   "Description": "Load Playbook member stack for SC?"
+  }
+ },
+ "Conditions": {
+  "EnableS3BucketForRedShift4": {
+   "Fn::Equals": [
+    {
+     "Ref": "CreateS3BucketForRedshiftAuditLogging"
+    },
+    "yes"
+   ]
+  },
+  "loadAFSBPCond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadAFSBPMemberStack"
+    },
+    "yes"
+   ]
+  },
+  "loadCIS120Cond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadCIS120MemberStack"
+    },
+    "yes"
+   ]
+  },
+  "loadCIS140Cond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadCIS140MemberStack"
+    },
+    "yes"
+   ]
+  },
+  "loadPCI321Cond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadPCI321MemberStack"
+    },
+    "yes"
+   ]
+  },
+  "loadSCCond": {
+   "Fn::Equals": [
+    {
+     "Ref": "LoadSCMemberStack"
+    },
+    "yes"
+   ]
+  }
+ },
+ "Resources": {
+  "S3BucketForRedShiftAuditLogging652E7355": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "cfn_nag": {
+     "rules_to_suppress": [
+      {
+       "id": "W35",
+       "reason": "Logs bucket does not require logging configuration"
+      }
+     ]
+    },
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Logs bucket does not require logging configuration",
+       "id": "AwsSolutions-S1"
+      }
+     ]
+    }
+   },
+   "Condition": "EnableS3BucketForRedShift4"
+  },
+  "S3BucketForRedShiftAuditLoggingBucketPolicyAB8BAA40": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "S3BucketForRedShiftAuditLogging652E7355"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetBucketAcl",
+        "s3:PutObject"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "redshift.amazonaws.com"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "S3BucketForRedShiftAuditLogging652E7355",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Sub": [
+          "arn:${AWS::Partition}:s3:::${BucketName}/*",
+          {
+           "BucketName": {
+            "Ref": "S3BucketForRedShiftAuditLogging652E7355"
+           }
+          }
+         ]
+        }
+       ],
+       "Sid": "Put bucket policy needed for audit logging"
+      },
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": "*",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "S3BucketForRedShiftAuditLogging652E7355",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "S3BucketForRedShiftAuditLogging652E7355",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ],
+       "Sid": "EnforceSSL"
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "DependsOn": [
+    "S3BucketForRedShiftAuditLogging652E7355"
+   ],
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/S3BucketForRedShiftAuditLoggingBucketPolicy/Resource"
+   },
+   "Condition": "EnableS3BucketForRedShift4"
+  },
+  "SSMParameterForS3BucketNameForREDSHIFT441DD36B1": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "Parameter to store the S3 bucket name for the remediation AFSBP.REDSHIFT.4, the default value is bucket-name which has to be updated by the user before using the remediation.",
+    "Name": "/Solutions/SO0111/afsbp/1.0.0/REDSHIFT.4/S3BucketNameForAuditLogging",
+    "Type": "String",
+    "Value": {
+     "Ref": "S3BucketForRedShiftAuditLogging652E7355"
+    }
+   },
+   "DependsOn": [
+    "S3BucketForRedShiftAuditLogging652E7355"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/SSMParameterForS3BucketNameForREDSHIFT4/Resource"
+   },
+   "Condition": "EnableS3BucketForRedShift4"
+  },
+  "SHARRRemediationKeyE744743D": {
+   "Type": "AWS::KMS::Key",
+   "Properties": {
+    "EnableKeyRotation": true,
+    "KeyPolicy": {
+     "Statement": [
+      {
+       "Action": [
+        "kms:GenerateDataKey",
+        "kms:GenerateDataKeyPair",
+        "kms:GenerateDataKeyPairWithoutPlaintext",
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:ReEncryptFrom",
+        "kms:ReEncryptTo",
+        "kms:DescribeKey",
+        "kms:DescribeCustomKeyStores"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "Service": [
+         "sns.amazonaws.com",
+         "s3.amazonaws.com",
+         {
+          "Fn::Join": [
+           "",
+           [
+            "logs.",
+            {
+             "Ref": "AWS::URLSuffix"
+            }
+           ]
+          ]
+         },
+         {
+          "Fn::Join": [
+           "",
+           [
+            "logs.",
+            {
+             "Ref": "AWS::Region"
+            },
+            ".",
+            {
+             "Ref": "AWS::URLSuffix"
+            }
+           ]
+          ]
+         },
+         {
+          "Fn::Join": [
+           "",
+           [
+            "cloudtrail.",
+            {
+             "Ref": "AWS::URLSuffix"
+            }
+           ]
+          ]
+         },
+         "cloudwatch.amazonaws.com"
+        ]
+       },
+       "Resource": "*"
+      },
+      {
+       "Action": "kms:*",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::",
+           {
+            "Ref": "AWS::AccountId"
+           },
+           ":root"
+          ]
+         ]
+        }
+       },
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/SHARR Remediation Key/Resource"
+   }
+  },
+  "SHARRRemediationKeyAlias5531874D": {
+   "Type": "AWS::KMS::Alias",
+   "Properties": {
+    "AliasName": "alias/SO0111-SHARR-Remediation-Key",
+    "TargetKeyId": {
+     "Fn::GetAtt": [
+      "SHARRRemediationKeyE744743D",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/SHARR Remediation Key Alias/Resource"
+   }
+  },
+  "SHARRKeyAliasEBF509D8": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "KMS Customer Managed Key that will encrypt data for remediations",
+    "Name": "/Solutions/SO0111/CMK_REMEDIATION_ARN",
+    "Type": "String",
+    "Value": {
+     "Fn::GetAtt": [
+      "SHARRRemediationKeyE744743D",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/SHARR Key Alias/Resource"
+   }
+  },
+  "SHARRMemberVersionEDAB5C42": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "Version of the AWS Security Hub Automated Response and Remediation solution",
+    "Name": "/Solutions/SO0111/member-version",
+    "Type": "String",
+    "Value": "v2.0.2"
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/SHARR Member Version/Resource"
+   }
+  },
+  "SSMParameterLogGroupName47918519": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "Parameter to store log group name",
+    "Name": "/Solutions/SO0111/Metrics_LogGroupName",
+    "Type": "String",
+    "Value": {
+     "Ref": "LogGroupName"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/SSMParameterLogGroupName/Resource"
+   }
+  },
+  "SSMParameterForS34EncryptionKeyAlias73DD8A98": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "Parameter to store encryption key alias for the PCI.S3.4/AFSBP.S3.4, replace the default value with the KMS Key Alias, other wise the remediation will enable the default AES256 encryption for the bucket.",
+    "Name": "/Solutions/SO0111/afsbp/1.0.0/S3.4/KmsKeyAlias",
+    "Type": "String",
+    "Value": "default-s3-encryption"
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/SSMParameterForS3.4EncryptionKeyAlias/Resource"
+   }
+  },
+  "NestedStackFactoryGatePlaybookMemberStackCIS120E08EFB8B": {
+   "Type": "AWS::CloudFormation::WaitConditionHandle",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/NestedStackFactory/GatePlaybookMemberStackCIS120",
+    "PlaybookMemberStackAFSBPReady": {
+     "Fn::If": [
+      "loadAFSBPCond",
+      {
+       "Ref": "PlaybookMemberStackAFSBP"
+      },
+      ""
+     ]
+    }
+   }
+  },
+  "NestedStackFactoryGatePlaybookMemberStackCIS1402A4735A6": {
+   "Type": "AWS::CloudFormation::WaitConditionHandle",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/NestedStackFactory/GatePlaybookMemberStackCIS140",
+    "PlaybookMemberStackAFSBPReady": {
+     "Fn::If": [
+      "loadAFSBPCond",
+      {
+       "Ref": "PlaybookMemberStackAFSBP"
+      },
+      ""
+     ]
+    },
+    "PlaybookMemberStackCIS120Ready": {
+     "Fn::If": [
+      "loadCIS120Cond",
+      {
+       "Ref": "PlaybookMemberStackCIS120"
+      },
+      ""
+     ]
+    }
+   }
+  },
+  "NestedStackFactoryGatePlaybookMemberStackPCI3214A12B906": {
+   "Type": "AWS::CloudFormation::WaitConditionHandle",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/NestedStackFactory/GatePlaybookMemberStackPCI321",
+    "PlaybookMemberStackAFSBPReady": {
+     "Fn::If": [
+      "loadAFSBPCond",
+      {
+       "Ref": "PlaybookMemberStackAFSBP"
+      },
+      ""
+     ]
+    },
+    "PlaybookMemberStackCIS120Ready": {
+     "Fn::If": [
+      "loadCIS120Cond",
+      {
+       "Ref": "PlaybookMemberStackCIS120"
+      },
+      ""
+     ]
+    },
+    "PlaybookMemberStackCIS140Ready": {
+     "Fn::If": [
+      "loadCIS140Cond",
+      {
+       "Ref": "PlaybookMemberStackCIS140"
+      },
+      ""
+     ]
+    }
+   }
+  },
+  "NestedStackFactoryGatePlaybookMemberStackSC0515DB36": {
+   "Type": "AWS::CloudFormation::WaitConditionHandle",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/NestedStackFactory/GatePlaybookMemberStackSC",
+    "PlaybookMemberStackAFSBPReady": {
+     "Fn::If": [
+      "loadAFSBPCond",
+      {
+       "Ref": "PlaybookMemberStackAFSBP"
+      },
+      ""
+     ]
+    },
+    "PlaybookMemberStackCIS120Ready": {
+     "Fn::If": [
+      "loadCIS120Cond",
+      {
+       "Ref": "PlaybookMemberStackCIS120"
+      },
+      ""
+     ]
+    },
+    "PlaybookMemberStackCIS140Ready": {
+     "Fn::If": [
+      "loadCIS140Cond",
+      {
+       "Ref": "PlaybookMemberStackCIS140"
+      },
+      ""
+     ]
+    },
+    "PlaybookMemberStackPCI321Ready": {
+     "Fn::If": [
+      "loadPCI321Cond",
+      {
+       "Ref": "PlaybookMemberStackPCI321"
+      },
+      ""
+     ]
+    }
+   }
+  },
+  "WaitProviderRole83B0295F": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "cloudwatch:PutMetricData",
+         "Effect": "Allow",
+         "Resource": "*"
+        },
+        {
+         "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+         ],
+         "Effect": "Allow",
+         "Resource": "*"
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "LambdaPolicy"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/WaitProviderRole/Resource",
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Resource * is needed for CloudWatch Logs policies used on Lambda functions.",
+       "id": "AwsSolutions-IAM5"
+      }
+     ]
+    }
+   }
+  },
+  "WaitProviderFunction3D90ED36": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Join": [
+       "",
+       [
+        "solutions-",
+        {
+         "Ref": "AWS::Region"
+        }
+       ]
+      ]
+     },
+     "S3Key": "aws-security-hub-automated-response-and-remediation/v2.0.2/lambda/wait_provider.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "LOG_LEVEL": "INFO"
+     }
+    },
+    "Handler": "wait_provider.lambda_handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "WaitProviderRole83B0295F",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 900
+   },
+   "DependsOn": [
+    "WaitProviderRole83B0295F"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/WaitProviderFunction/Resource",
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Will upgrade in next release to prioritize patch",
+       "id": "AwsSolutions-L1"
+      }
+     ]
+    }
+   }
+  },
+  "RunbookStackNoRoles": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "Parameters": {
+     "WaitProviderServiceToken": {
+      "Fn::GetAtt": [
+       "WaitProviderFunction3D90ED36",
+       "Arn"
+      ]
+     }
+    },
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/aws-sharr-remediations.template"
+      ]
+     ]
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/RunbookStackNoRoles.NestedStack/RunbookStackNoRoles.NestedStackResource",
+    "aws:asset:path": "MemberStackRunbookStackNoRoles129D4B44.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   }
+  },
+  "PlaybookMemberStackAFSBP": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "Parameters": {
+     "SecHubAdminAccount": {
+      "Ref": "SecHubAdminAccount"
+     },
+     "WaitProviderServiceToken": {
+      "Fn::GetAtt": [
+       "WaitProviderFunction3D90ED36",
+       "Arn"
+      ]
+     }
+    },
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/AFSBPMemberStack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "RunbookStackNoRoles"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/PlaybookMemberStackAFSBP.NestedStack/PlaybookMemberStackAFSBP.NestedStackResource",
+    "aws:asset:path": "MemberStackPlaybookMemberStackAFSBP4C78B470.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadAFSBPCond"
+  },
+  "PlaybookMemberStackCIS120": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "Parameters": {
+     "SecHubAdminAccount": {
+      "Ref": "SecHubAdminAccount"
+     },
+     "WaitProviderServiceToken": {
+      "Fn::GetAtt": [
+       "WaitProviderFunction3D90ED36",
+       "Arn"
+      ]
+     }
+    },
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/CIS120MemberStack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "NestedStackFactoryGatePlaybookMemberStackCIS120E08EFB8B",
+    "RunbookStackNoRoles"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/PlaybookMemberStackCIS120.NestedStack/PlaybookMemberStackCIS120.NestedStackResource",
+    "aws:asset:path": "MemberStackPlaybookMemberStackCIS1208214A011.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadCIS120Cond"
+  },
+  "PlaybookMemberStackCIS140": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "Parameters": {
+     "SecHubAdminAccount": {
+      "Ref": "SecHubAdminAccount"
+     },
+     "WaitProviderServiceToken": {
+      "Fn::GetAtt": [
+       "WaitProviderFunction3D90ED36",
+       "Arn"
+      ]
+     }
+    },
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/CIS140MemberStack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "NestedStackFactoryGatePlaybookMemberStackCIS1402A4735A6",
+    "RunbookStackNoRoles"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/PlaybookMemberStackCIS140.NestedStack/PlaybookMemberStackCIS140.NestedStackResource",
+    "aws:asset:path": "MemberStackPlaybookMemberStackCIS140A1C9930D.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadCIS140Cond"
+  },
+  "PlaybookMemberStackPCI321": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "Parameters": {
+     "SecHubAdminAccount": {
+      "Ref": "SecHubAdminAccount"
+     },
+     "WaitProviderServiceToken": {
+      "Fn::GetAtt": [
+       "WaitProviderFunction3D90ED36",
+       "Arn"
+      ]
+     }
+    },
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/PCI321MemberStack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "NestedStackFactoryGatePlaybookMemberStackPCI3214A12B906",
+    "RunbookStackNoRoles"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/PlaybookMemberStackPCI321.NestedStack/PlaybookMemberStackPCI321.NestedStackResource",
+    "aws:asset:path": "MemberStackPlaybookMemberStackPCI321AE5993D8.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadPCI321Cond"
+  },
+  "PlaybookMemberStackSC": {
+   "Type": "AWS::CloudFormation::Stack",
+   "Properties": {
+    "Parameters": {
+     "SecHubAdminAccount": {
+      "Ref": "SecHubAdminAccount"
+     },
+     "WaitProviderServiceToken": {
+      "Fn::GetAtt": [
+       "WaitProviderFunction3D90ED36",
+       "Arn"
+      ]
+     }
+    },
+    "TemplateURL": {
+     "Fn::Join": [
+      "",
+      [
+       "https://",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "S3Bucket"
+        ]
+       },
+       "-reference.s3.amazonaws.com/",
+       {
+        "Fn::FindInMap": [
+         "NestedStackFactorySourceCodeA11A36A7",
+         "General",
+         "KeyPrefix"
+        ]
+       },
+       "/playbooks/SCMemberStack.template"
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "NestedStackFactoryGatePlaybookMemberStackSC0515DB36",
+    "RunbookStackNoRoles"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/PlaybookMemberStackSC.NestedStack/PlaybookMemberStackSC.NestedStackResource",
+    "aws:asset:path": "MemberStackPlaybookMemberStackSC32593DFD.nested.template.json",
+    "aws:asset:property": "TemplateURL"
+   },
+   "Condition": "loadSCCond"
+  },
+  "AppRegistry968496A3": {
+   "Type": "AWS::ServiceCatalogAppRegistry::Application",
+   "Properties": {
+    "Description": "Service Catalog application to track and manage all your resources for the solution automated-security-response-on-aws",
+    "Name": {
+     "Fn::Join": [
+      "-",
+      [
+       {
+        "Fn::FindInMap": [
+         "Solution",
+         "Data",
+         "AppRegistryApplicationName"
+        ]
+       },
+       {
+        "Ref": "AWS::StackName"
+       },
+       {
+        "Ref": "AWS::Region"
+       },
+       {
+        "Ref": "AWS::AccountId"
+       }
+      ]
+     ]
+    },
+    "Tags": {
+     "Solutions:ApplicationType": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ApplicationType"
+      ]
+     },
+     "Solutions:SolutionID": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ID"
+      ]
+     },
+     "Solutions:SolutionName": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "SolutionName"
+      ]
+     },
+     "Solutions:SolutionVersion": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "Version"
+      ]
+     }
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/Resource"
+   }
+  },
+  "AppRegistryAttributeGroupAssociation8045a8dd9527B814DC7A": {
+   "Type": "AWS::ServiceCatalogAppRegistry::AttributeGroupAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "AttributeGroup": {
+     "Fn::GetAtt": [
+      "DefaultApplicationAttributesFC1CC26B",
+      "Id"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/AttributeGroupAssociation8045a8dd9527"
+   }
+  },
+  "AppRegistryResourceAssociation142839FB0": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "RunbookStackNoRoles"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "RunbookStackNoRoles"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/ResourceAssociation1"
+   }
+  },
+  "AppRegistryResourceAssociation2BB1A3300": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookMemberStackAFSBP"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookMemberStackAFSBP"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/ResourceAssociation2"
+   },
+   "Condition": "loadAFSBPCond"
+  },
+  "AppRegistryResourceAssociation3BEAC7BB7": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookMemberStackCIS120"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookMemberStackCIS120"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/ResourceAssociation3"
+   },
+   "Condition": "loadCIS120Cond"
+  },
+  "AppRegistryResourceAssociation46F7B9873": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookMemberStackCIS140"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookMemberStackCIS140"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/ResourceAssociation4"
+   },
+   "Condition": "loadCIS140Cond"
+  },
+  "AppRegistryResourceAssociation5FAA30631": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookMemberStackPCI321"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookMemberStackPCI321"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/ResourceAssociation5"
+   },
+   "Condition": "loadPCI321Cond"
+  },
+  "AppRegistryResourceAssociation62B582FF5": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "PlaybookMemberStackSC"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "DependsOn": [
+    "PlaybookMemberStackSC"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistry/ResourceAssociation6"
+   },
+   "Condition": "loadSCCond"
+  },
+  "AppRegistryAssociation": {
+   "Type": "AWS::ServiceCatalogAppRegistry::ResourceAssociation",
+   "Properties": {
+    "Application": {
+     "Fn::GetAtt": [
+      "AppRegistry968496A3",
+      "Id"
+     ]
+    },
+    "Resource": {
+     "Ref": "AWS::StackId"
+    },
+    "ResourceType": "CFN_STACK"
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/AppRegistryAssociation"
+   }
+  },
+  "DefaultApplicationAttributesFC1CC26B": {
+   "Type": "AWS::ServiceCatalogAppRegistry::AttributeGroup",
+   "Properties": {
+    "Attributes": {
+     "applicationType": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ApplicationType"
+      ]
+     },
+     "version": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "Version"
+      ]
+     },
+     "solutionID": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "ID"
+      ]
+     },
+     "solutionName": {
+      "Fn::FindInMap": [
+       "Solution",
+       "Data",
+       "SolutionName"
+      ]
+     }
+    },
+    "Description": "Attribute group for solution information",
+    "Name": {
+     "Fn::Join": [
+      "",
+      [
+       "ASR-",
+       {
+        "Ref": "AWS::StackName"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MemberStack/DefaultApplicationAttributes/Resource"
+   }
+  }
+ },
+ "Mappings": {
+  "NestedStackFactorySourceCodeA11A36A7": {
+   "General": {
+    "S3Bucket": "solutions",
+    "KeyPrefix": "aws-security-hub-automated-response-and-remediation/v2.0.2"
+   }
+  },
+  "Solution": {
+   "Data": {
+    "ID": "SO0111",
+    "Version": "v2.0.2",
+    "AppRegistryApplicationName": "automated-security-response-on-aws",
+    "SolutionName": "automated-security-response-on-aws",
+    "ApplicationType": "AWS-Solutions"
+   }
+  }
+ }
+}
