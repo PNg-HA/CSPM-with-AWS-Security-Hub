@@ -117,9 +117,9 @@ Receive the GroupID and the AssumeRole ARN as inputs, then execute a remediation
 
 ##### Remediation runbook:
 Receive Security Group ID and IP permissions as inputs
-![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/a4c197a6-9925-462a-b8e7-057f7e47c25d)
 
-![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/7bbc2023-d095-46cf-bb9d-fa18b7007aa7)
+<img width="30%" src="https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/7bbc2023-d095-46cf-bb9d-fa18b7007aa7">
+
 Then call the EC2 API RevokeSecurityGroupIngress:
 ![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/6759f7c5-ee19-41f3-8300-ba3d44d816f8)
 
