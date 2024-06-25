@@ -99,8 +99,7 @@ Removes public access to remove server administrative ports from an EC2 Security
 
 **Input parameters**
 
-- Finding: Security Hub finding details JSON
-- 
+- Finding: Security Hub finding details JSON 
 - AutomationAssumeRole: ARN of the role allows automation to perform on your behalf.
 
 **Output parameters**
