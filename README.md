@@ -91,8 +91,8 @@ Output:
 - Successfull automated remediation
 
 ##### Control Runbook EC2.13
-![image](https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/9bdfabbc-1838-40e0-8ffd-9a21742e1468)
 
+<img width="80%" src="https://github.com/PNg-HA/CSPM-with-AWS-Security-Hub/assets/93396414/9bdfabbc-1838-40e0-8ffd-9a21742e1468">
 **What does this document do?**
 
 Removes public access to remove server administrative ports from an EC2 Security Group.
